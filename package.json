@@ -1,11 +1,9 @@
 {
-  "name": "amitnginx",
+  "name": "vercel",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "index.ts",
   "scripts": {
-    "build": "ng build --configuration=production",
-    "start": "nodemon index.js",
-    "dev": "nodemon index.js"
+    "start": "node api/index.ts"
   },
   "engines": {
     "node": ">=16.18.1"
@@ -36,5 +34,8 @@
     "puppeteer-core": "^22.13.0",
     "request": "^2.88.2",
     "selenium-webdriver": "^4.8.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.5.0"
   }
 }
