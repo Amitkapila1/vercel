@@ -1,9 +1,10 @@
 {
   "name": "vercel",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "index.js",
   "scripts": {
-    "start": "node api/index.ts"
+    "start": "node api/index.js",
+    "dev": "nodemon api/index.js"
   },
   "engines": {
     "node": ">=16.18.1"
