@@ -462,8 +462,8 @@ app.get('/api/mcinsightspg', async function (req, res) {
     mcinsightspg();
     // trendlyneDVMpg();
   });
-
-  app.get('/api/trendlynecookie', async function (req, res) {
+  // app.use('/',(req,res) => {res.json({message:"Hi Amit!!!!"})})
+  app.use('/trendlynecookie', async function (req, res) {
 
             
    
@@ -471,7 +471,7 @@ app.get('/api/mcinsightspg', async function (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath 
+      const executablePath =  await chromium.executablePath 
     
       browser = await puppeteer.launch({
              args: chromium.args,
@@ -1831,7 +1831,7 @@ app.get('/api/ttvolbreakoutpg', async function (req, res) {
       }
     });
   };
-  app.listen( process.env.PORT || 3000, function () {
+  app.listen(  9000,  () => {
     console.log('Your node is running on port 3000');
-  })
-//  }
+  });
+  module.exports = app;
