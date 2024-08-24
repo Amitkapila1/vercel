@@ -471,7 +471,7 @@ app.get('/api/mcinsightspg', async function (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath =  await chromium.executablePath 
+      const executablePath =  await chromium.executablePath() 
     
       browser = await puppeteer.launch({
              args: chromium.args,
