@@ -471,7 +471,7 @@ app.get('/mcinsightspg', async function (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath =  await chromium.executablePath() 
+      const executablePath =  await chromium.executablePath()
     
       browser = await puppeteer.launch({
              args: chromium.args,
@@ -496,7 +496,7 @@ app.get('/mcinsightspg', async function (req, res) {
        
           
     cookie = await page.cookies()
-     console.log(cookie)
+   
     for (let val in cookie){
      
         if (cookie[val].name == '.trendlyne'){
@@ -514,29 +514,29 @@ app.get('/mcinsightspg', async function (req, res) {
      console.log(process.env.trnd)
   
       
-        axiosApiInstance
-          .post('/updateOne', {
-            collection: 'cookie',
-            database: 'Trendlynecookie',
-            dataSource: 'Cluster0',
-            filter: {},
-            update: {
-              $set: {
-                "csrf":  process.env.csrf,
-                "trnd":  process.env.trnd,
-                "time": start
-              },
-            },
-            upsert: true,
-          })
-          .then(() => {
-            console.log('Trendlyne cookie Data updated successfully');
+        // axiosApiInstance
+        //   .post('/updateOne', {
+        //     collection: 'cookie',
+        //     database: 'Trendlynecookie',
+        //     dataSource: 'Cluster0',
+        //     filter: {},
+        //     update: {
+        //       $set: {
+        //         "csrf":  process.env.csrf,
+        //         "trnd":  process.env.trnd,
+        //         "time": start
+        //       },
+        //     },
+        //     upsert: true,
+        //   })
+        //   .then(() => {
+        //     console.log('Trendlyne cookie Data updated successfully');
             
-          })
-          .catch((error) => {
-            console.log('Error while updating data:', error);
+        //   })
+        //   .catch((error) => {
+        //     console.log('Error while updating data:', error);
            
-          });
+        //   });
   
       const timeTaken = Date.now() - start;
       console.log(`Total time taken: ${timeTaken} milliseconds`);
@@ -566,7 +566,7 @@ app.get('/trendlynecookiepg', async function (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath = await chromium.executablePath 
+      const executablePath = await chromium.executablePath() 
     
       browser = await chromium.puppeteer.launch({
              args: [chromium.args, '--no-sandbox', '--disable-setuid-sandbox'],
@@ -717,7 +717,7 @@ async function trendlynecookiepg (req, res) {
   try {
     const start = Date.now();
     console.log(start)
-    const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath 
+    const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath() 
   
     browser = await puppeteer.launch({
            args: chromium.args,
@@ -948,7 +948,7 @@ async function trendlynecookiepg (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath 
+      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath() 
     
       browser = await puppeteer.launch({
              args: chromium.args,
@@ -1042,7 +1042,7 @@ async function trendlynecookiepg (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath 
+      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath() 
     
       browser = await puppeteer.launch({
              args: chromium.args,
@@ -1133,7 +1133,7 @@ async function trendlynecookiepg (req, res) {
     console.log('spawning chrome headless')
     try {
       const start = Date.now();
-      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath 
+      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath() 
     
       browser = await puppeteer.launch({
              args: chromium.args,
