@@ -28,7 +28,7 @@ function ttvolbreak(){
 function trendlyneDVM(){
   trendlyneDVM()
 }
-console.log(time); // output example: "15:30"
+// console.log(time); // output example: "15:30"
 if (time == '09:45'){
   Trendlynecookie()
 }
@@ -103,7 +103,7 @@ app.use(bodyParser.raw());
   });
  
   
-  app.get('/api/mcinsights', function (req, res) {
+  app.get('/mcinsights', function (req, res) {
     const start = Date.now();
     const obj = [];
     
@@ -213,92 +213,92 @@ fs.readFile('./tlid.json', (err, data) => {
 
 const batchSize = 100; // Number of symbols to process in each batch
 
-async function mcinsightspg(req, res) {
-  const start = Date.now();
-  const obj = [];
-  const tableName = 'mcinsights';
-  try {
-      const createTableQuery = `
-      CREATE TABLE IF NOT EXISTS mcinsights (
-        id SERIAL PRIMARY KEY,
-        obj JSONB,
-        time TIMESTAMP
-      )
-    `;
-    await pool.query(createTableQuery);
+// async function mcinsightspg(req, res) {
+//   const start = Date.now();
+//   const obj = [];
+//   const tableName = 'mcinsights';
+//   try {
+//       const createTableQuery = `
+//       CREATE TABLE IF NOT EXISTS mcinsights (
+//         id SERIAL PRIMARY KEY,
+//         obj JSONB,
+//         time TIMESTAMP
+//       )
+//     `;
+//     await pool.query(createTableQuery);
     
-    // Delete all existing entries in the table
-    const deleteQuery = `DELETE FROM ${tableName}`;
-    await pool.query(deleteQuery);
+//     // Delete all existing entries in the table
+//     const deleteQuery = `DELETE FROM ${tableName}`;
+//     await pool.query(deleteQuery);
 
-    // Create an index on the "FnO" field
-    const createIndexQuery = `
-      CREATE INDEX IF NOT EXISTS fno_idx ON ${tableName} (((obj->>'FnO')))
-    `;
-    await pool.query(createIndexQuery);
-    const data = fs.readFileSync('./tlid.json');
-    const symbols = JSON.parse(data);
+//     // Create an index on the "FnO" field
+//     const createIndexQuery = `
+//       CREATE INDEX IF NOT EXISTS fno_idx ON ${tableName} (((obj->>'FnO')))
+//     `;
+//     await pool.query(createIndexQuery);
+//     const data = fs.readFileSync('./tlid.json');
+//     const symbols = JSON.parse(data);
 
-    const processBatch = async (symbolBatch) => {
-      const promises = symbolBatch.map(async (symbol) => {
-        try {
-          const response = await fetch(
-            `https://api.moneycontrol.com//mcapi//v1//extdata//mc-insights?scId=${symbol.mcsymbol}&type=d`,
-            {
-              headers: { Accept: 'application/json' },
-            }
-          );
+//     const processBatch = async (symbolBatch) => {
+//       const promises = symbolBatch.map(async (symbol) => {
+//         try {
+//           const response = await fetch(
+//             `https://api.moneycontrol.com//mcapi//v1//extdata//mc-insights?scId=${symbol.mcsymbol}&type=d`,
+//             {
+//               headers: { Accept: 'application/json' },
+//             }
+//           );
 
-          if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-          }
+//           if (!response.ok) {
+//             throw new Error(`HTTP error! status: ${response.status}`);
+//           }
 
-          const data1 = await response.json();
+//           const data1 = await response.json();
 
-          console.log(`${symbol.name}`);
+//           console.log(`${symbol.name}`);
 
-          // Check if data1.data['insightData']['price'][5] exists before pushing to obj array
-          if (data1.data['insightData']['price'][5]) {
-            const entry = {
-              Name: `${symbol.name}`,
-              FnO: data1.data['insightData']['price'][4],
-              DealData: data1.data['insightData']['price'][5],
-            };
+//           // Check if data1.data['insightData']['price'][5] exists before pushing to obj array
+//           if (data1.data['insightData']['price'][5]) {
+//             const entry = {
+//               Name: `${symbol.name}`,
+//               FnO: data1.data['insightData']['price'][4],
+//               DealData: data1.data['insightData']['price'][5],
+//             };
 
-            obj.push(entry);
-          }
-        } catch (error) {
-          console.log('Error while fetching data:', error);
-        }
-      });
+//             obj.push(entry);
+//           }
+//         } catch (error) {
+//           console.log('Error while fetching data:', error);
+//         }
+//       });
 
-      await Promise.all(promises);
-    };
+//       await Promise.all(promises);
+//     };
 
-    for (let i = 0; i < symbols.length; i += batchSize) {
-      const symbolBatch = symbols.slice(i, i + batchSize);
-      await processBatch(symbolBatch);
-    }
+//     for (let i = 0; i < symbols.length; i += batchSize) {
+//       const symbolBatch = symbols.slice(i, i + batchSize);
+//       await processBatch(symbolBatch);
+//     }
 
-    const timeTaken = Date.now() - start;
-    console.log(`Total time taken: ${timeTaken} milliseconds`);
+//     const timeTaken = Date.now() - start;
+//     console.log(`Total time taken: ${timeTaken} milliseconds`);
 
-    const insertQuery = `
-      INSERT INTO mcinsights (obj, time)
-      VALUES ($1, $2)
-      ON CONFLICT DO NOTHING
-    `;
+//     const insertQuery = `
+//       INSERT INTO mcinsights (obj, time)
+//       VALUES ($1, $2)
+//       ON CONFLICT DO NOTHING
+//     `;
 
-    const objString = JSON.stringify(obj);
+//     const objString = JSON.stringify(obj);
 
-    await pool.query(insertQuery, [objString, new Date(start)]);
+//     await pool.query(insertQuery, [objString, new Date(start)]);
 
-    console.log('Data updated successfully');
-  } catch (error) {
-    console.log('Error while processing data:', error);
-  }
-}
-app.get('/api/mcinsightspg', async function (req, res) {
+//     console.log('Data updated successfully');
+//   } catch (error) {
+//     console.log('Error while processing data:', error);
+//   }
+// }
+app.get('/mcinsightspg', async function (req, res) {
   const start = Date.now();
   const obj = [];
 
@@ -385,7 +385,7 @@ app.get('/api/mcinsightspg', async function (req, res) {
 });
 
 
-    app.get('/api/mcsymbolnamefetcher', async function (req, res) {
+    app.get('/mcsymbolnamefetcher', async function (req, res) {
    
       fs.readFile('./symbol.json', async (err, data) => {
         if (err) {
@@ -456,7 +456,7 @@ app.get('/api/mcinsightspg', async function (req, res) {
     });
     
               
-  app.get('/api/ttvolnmcinsight', async function (req, res) {
+  app.get('/ttvolnmcinsight', async function (req, res) {
 
     ttvolbreakoutpg();
     mcinsightspg();
@@ -558,7 +558,7 @@ app.get('/api/mcinsightspg', async function (req, res) {
   });
   
 
-app.get('/api/trendlynecookiepg', async function (req, res) {
+app.get('/trendlynecookiepg', async function (req, res) {
  
     
    
@@ -1127,7 +1127,7 @@ async function trendlynecookiepg (req, res) {
 
      
 
-  app.get('/api/Opstracookie', async function (req, res) {
+  app.get('/Opstracookie', async function (req, res) {
    
     let browser = null
     console.log('spawning chrome headless')
@@ -1217,7 +1217,7 @@ async function trendlynecookiepg (req, res) {
   
  
   //*This is ET now Stock Data Details used in Share component using parallel api run
-  app.get('/api/etsharetoday', function (req, res) {
+  app.get('/etsharetoday', function (req, res) {
 
     let eqsymbol = req.query.eqsymbol
   
@@ -1230,7 +1230,7 @@ async function trendlynecookiepg (req, res) {
   })
  
 
-  app.get('/api/trendlyneDVMpg', async function (req, res) {
+  app.get('/trendlyneDVMpg', async function (req, res) {
     const start = Date.now();
     const obj = [];
   
@@ -1323,7 +1323,7 @@ async function trendlynecookiepg (req, res) {
   
   
 
-  app.get('/api/trendlyneDVM', function (req, res) {
+  app.get('/trendlyneDVM', function (req, res) {
     const start = Date.now();
     const obj = [];
   
@@ -1494,94 +1494,94 @@ async function trendlyneDVM(req, res) {
     });
   };
  
-  async function ttvolbreakoutpg(req, res) {
-    const start = Date.now();
-    const obj = [];
-    const tableName = 'Volume';
+//   async function ttvolbreakoutpg(req, res) {
+//     const start = Date.now();
+//     const obj = [];
+//     const tableName = 'Volume';
   
-    try {
+//     try {
         
       
-         const createTableQuery = `
-        CREATE TABLE IF NOT EXISTS Volume (
-          id SERIAL PRIMARY KEY,
-          obj JSONB,
-          time TIMESTAMP
-        )
-      `;
-      await pool.query(createTableQuery);
-    const deleteQuery = `DELETE FROM Volume`;
-      await pool.query(deleteQuery);
+//          const createTableQuery = `
+//         CREATE TABLE IF NOT EXISTS Volume (
+//           id SERIAL PRIMARY KEY,
+//           obj JSONB,
+//           time TIMESTAMP
+//         )
+//       `;
+//       await pool.query(createTableQuery);
+//     const deleteQuery = `DELETE FROM Volume`;
+//       await pool.query(deleteQuery);
   
-      // Create an index on the "volBreakout" field
-      const createIndexQuery = `
-        CREATE INDEX IF NOT EXISTS volBreakout_idx ON Volume (((obj->>'volBreakout')::numeric))
-      `;
-      await pool.query(createIndexQuery);
-      const data = fs.readFileSync('./tlid.json');
-      const symbols = JSON.parse(data);
+//       // Create an index on the "volBreakout" field
+//       const createIndexQuery = `
+//         CREATE INDEX IF NOT EXISTS volBreakout_idx ON Volume (((obj->>'volBreakout')::numeric))
+//       `;
+//       await pool.query(createIndexQuery);
+//       const data = fs.readFileSync('./tlid.json');
+//       const symbols = JSON.parse(data);
   
-      for (let i = 0; i < symbols.length; i += 100) {
-        const symbolBatch = symbols.slice(i, i + 100);
+//       for (let i = 0; i < symbols.length; i += 100) {
+//         const symbolBatch = symbols.slice(i, i + 100);
   
-        const promises = symbolBatch.map(async (symbol) => {
-          try {
-            const response = await fetch(
-              `https://quotes-api.tickertape.in/quotes?sids=${symbol.ttsymbol}`,
-              {
-                headers: { Accept: 'application/json' },
-              }
-            );
+//         const promises = symbolBatch.map(async (symbol) => {
+//           try {
+//             const response = await fetch(
+//               `https://quotes-api.tickertape.in/quotes?sids=${symbol.ttsymbol}`,
+//               {
+//                 headers: { Accept: 'application/json' },
+//               }
+//             );
   
-            if (!response.ok) {
-              throw new Error(`HTTP error! status: ${response.status}`);
-            }
+//             if (!response.ok) {
+//               throw new Error(`HTTP error! status: ${response.status}`);
+//             }
   
-            const data1 = await response.json();
-            console.log(`${symbol.name}`);
-            console.log(data1['data'][0]['sid']);
+//             const data1 = await response.json();
+//             console.log(`${symbol.name}`);
+//             console.log(data1['data'][0]['sid']);
   
-            obj.push({
-              Name: `${symbol.name}`,
-              sid: data1['data'][0]['sid'],
-              volBreakout: data1['data'][0]['volBreakout'],
-            });
-          } catch (error) {
-            console.log('Error while fetching data:', error);
-          }
-        });
+//             obj.push({
+//               Name: `${symbol.name}`,
+//               sid: data1['data'][0]['sid'],
+//               volBreakout: data1['data'][0]['volBreakout'],
+//             });
+//           } catch (error) {
+//             console.log('Error while fetching data:', error);
+//           }
+//         });
   
-        await Promise.all(promises);
-      }
+//         await Promise.all(promises);
+//       }
   
-      const timeTaken = Date.now() - start;
-      console.log(`Total time taken: ${timeTaken} milliseconds`);
+//       const timeTaken = Date.now() - start;
+//       console.log(`Total time taken: ${timeTaken} milliseconds`);
   
-      const connectionString = process.env.POSTGRESS_DATABASE_URL;
-      const dbName = 'Tickertape';
-      const tableName = 'Volume';
+//       const connectionString = process.env.POSTGRESS_DATABASE_URL;
+//       const dbName = 'Tickertape';
+//       const tableName = 'Volume';
   
-      const client = new Client({ connectionString });
-      await client.connect();
+//       const client = new Client({ connectionString });
+//       await client.connect();
   
-      const insertQuery = `
-        INSERT INTO ${tableName} (obj, time)
-        VALUES ($1, $2)
-      `;
+//       const insertQuery = `
+//         INSERT INTO ${tableName} (obj, time)
+//         VALUES ($1, $2)
+//       `;
   
-      const objString = JSON.stringify(obj);
+//       const objString = JSON.stringify(obj);
   
-      await client.query(insertQuery, [objString, new Date(start)]);
-      await client.end();
+//       await client.query(insertQuery, [objString, new Date(start)]);
+//       await client.end();
   
-      console.log('Data updated successfully');
-      res.send('Data updated successfully');
-    } catch (error) {
-      console.log('Error while processing data:', error);
-      res.status(500).send('Internal server error');
-    }
-  }
-app.get('/api/ttvolbreakoutpg', async function (req, res) {
+//       console.log('Data updated successfully');
+//       res.send('Data updated successfully');
+//     } catch (error) {
+//       console.log('Error while processing data:', error);
+//       res.status(500).send('Internal server error');
+//     }
+//   }
+ app.get('/ttvolbreakoutpg', async function (req, res) {
   const start = Date.now();
   const obj = [];
 
@@ -1668,7 +1668,7 @@ app.get('/api/ttvolbreakoutpg', async function (req, res) {
   }
 });
 
-  app.get('/api/ttvolbreakout', function (req, res) {
+  app.get('/ttvolbreakout', function (req, res) {
     const start = Date.now();
     const obj = [];
   
@@ -1751,86 +1751,86 @@ app.get('/api/ttvolbreakoutpg', async function (req, res) {
 
   
 
-  async function ttvolbreakout(req, res) {
-    const start = Date.now();
-    const obj = [];
+  // async function ttvolbreakout(req, res) {
+  //   const start = Date.now();
+  //   const obj = [];
   
-    fs.readFile('./tlid.json', async (err, data) => {
-      if (err) {
-        console.log('Error while reading file:', err);
+  //   fs.readFile('./tlid.json', async (err, data) => {
+  //     if (err) {
+  //       console.log('Error while reading file:', err);
       
-        return;
-      }
+  //       return;
+  //     }
   
-      try {
-        // Parse the data into an array
-        const symbols = JSON.parse(data);
+  //     try {
+  //       // Parse the data into an array
+  //       const symbols = JSON.parse(data);
   
-        // Process 100 symbols at a time
-        for (let i = 0; i < symbols.length; i += 100) {
-          const symbolBatch = symbols.slice(i, i + 100);
+  //       // Process 100 symbols at a time
+  //       for (let i = 0; i < symbols.length; i += 100) {
+  //         const symbolBatch = symbols.slice(i, i + 100);
   
-          const promises = symbolBatch.map(async symbol => {
-            try {
-              const response = await fetch(
-                `https://quotes-api.tickertape.in/quotes?sids=${symbol.ttsymbol}`,
-                {
-                  headers: { Accept: 'application/json' },
-                }
-              );
+  //         const promises = symbolBatch.map(async symbol => {
+  //           try {
+  //             const response = await fetch(
+  //               `https://quotes-api.tickertape.in/quotes?sids=${symbol.ttsymbol}`,
+  //               {
+  //                 headers: { Accept: 'application/json' },
+  //               }
+  //             );
   
-              if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-              }
+  //             if (!response.ok) {
+  //               throw new Error(`HTTP error! status: ${response.status}`);
+  //             }
   
-              const data1 = await response.json();
-              console.log(`${symbol.name}`);
-              console.log(data1['data'][0]['sid'])
+  //             const data1 = await response.json();
+  //             console.log(`${symbol.name}`);
+  //             console.log(data1['data'][0]['sid'])
   
-              obj.push({
-                Name: `${symbol.name}`,
-                sid:data1['data'][0]['sid'],
-                volBreakout:data1['data'][0]['volBreakout']
-              });
-            } catch (error) {
-              console.log('Error while fetching data:', error);
-            }
-          });
+  //             obj.push({
+  //               Name: `${symbol.name}`,
+  //               sid:data1['data'][0]['sid'],
+  //               volBreakout:data1['data'][0]['volBreakout']
+  //             });
+  //           } catch (error) {
+  //             console.log('Error while fetching data:', error);
+  //           }
+  //         });
   
-          await Promise.all(promises);
-        }
+  //         await Promise.all(promises);
+  //       }
   
-        const timeTaken = Date.now() - start;
-        console.log(`Total time taken: ${timeTaken} milliseconds`);
+  //       const timeTaken = Date.now() - start;
+  //       console.log(`Total time taken: ${timeTaken} milliseconds`);
   
-        axiosApiInstance
-          .post('/updateOne', {
-            collection: 'Volume',
-            database: 'Tickertape',
-            dataSource: 'Cluster0',
-            filter: {},
-            update: {
-              $set: {
-                 obj,
-                time: start,
-              },
-            },
-            upsert: true,
-          })
-          .then(() => {
-            console.log('Data updated successfully');
+  //       axiosApiInstance
+  //         .post('/updateOne', {
+  //           collection: 'Volume',
+  //           database: 'Tickertape',
+  //           dataSource: 'Cluster0',
+  //           filter: {},
+  //           update: {
+  //             $set: {
+  //                obj,
+  //               time: start,
+  //             },
+  //           },
+  //           upsert: true,
+  //         })
+  //         .then(() => {
+  //           console.log('Data updated successfully');
           
-          })
-          .catch((error) => {
-            console.log('Error while updating data:', error);
+  //         })
+  //         .catch((error) => {
+  //           console.log('Error while updating data:', error);
            
-          });
-      } catch (error) {
-        console.log('Error while parsing data:', error);
+  //         });
+  //     } catch (error) {
+  //       console.log('Error while parsing data:', error);
         
-      }
-    });
-  };
+  //     }
+  //   });
+  // };
   app.listen(  9000,  () => {
     console.log('Your node is running on port 3000');
   });
