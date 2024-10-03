@@ -385,77 +385,539 @@ const batchSize = 100; // Number of symbols to process in each batch
 // });
 
 
-    app.get('/mcsymbolnamefetcher', async function (req, res) {
-   
-      fs.readFile('./symbol.json', async (err, data) => {
-        if (err) {
-          console.log('Error while reading file:', err);
-          return;
-        }
-    
-        try {
-          // Parse the data into an array
-          const symbols = JSON.parse(data);
-    
-          // Process 100 symbols at a time
-          const symbolBatches = [];
-          for (let i = 0; i < symbols.length; i += 200) {
-            symbolBatches.push(symbols.slice(i, i + 200));
-          }
-    
-          const results = [];
-    
-          // Process each symbol batch asynchronously
-          for (const symbolBatch of symbolBatches) {
-            const promises = symbolBatch.map(async symbol => {
-              try {
-                const response = await fetch(`https://priceapi.moneycontrol.com/pricefeed/nse/equitycash/${symbol.mcsymbol}`, {
-  "headers": {
-    "accept": "*/*",
-    "accept-language": "en-US,en;q=0.9",
-    "if-none-match": "F30DADFE47849461912656050BA26686",
-    "sec-ch-ua": "\"Google Chrome\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
-    "sec-ch-ua-mobile": "?0",
-    "sec-ch-ua-platform": "\"Windows\"",
-    "sec-fetch-dest": "empty",
-    "sec-fetch-mode": "cors",
-    "sec-fetch-site": "same-site",
-    "Referer": "https://www.moneycontrol.com/",
-    "Referrer-Policy": "strict-origin-when-cross-origin"
-  },
-  "body": null,
-  "method": "GET"
-}) 
-                const json = await response.json();
-                results.push(json);
-              } catch (error) {
-                console.error('Error processing symbol:', symbol.name, error);
-              }
+app.get('/api/mcsymbolnamefetcher', async function (req, res) {
+
+  fs.readFile('./symbol.json', async (err, data) => {
+    if (err) {
+      console.log('Error while reading file:', err);
+      return res.status(500).send('File read error');
+    }
+
+    try {
+      // Parse the data into an array
+      const symbols = JSON.parse(data);
+
+      // Process symbols in batches
+      const symbolBatches = [];
+      for (let i = 0; i < symbols.length; i += 200) {
+        symbolBatches.push(symbols.slice(i, i + 200));
+      }
+
+      const csvRows = [['symbol', 'name', 'isin', 'sc_fullnm']];  // CSV header
+
+      // Process each symbol batch asynchronously
+      for (const symbolBatch of symbolBatches) {
+        const promises = symbolBatch.map(async symbol => {
+          try {
+            const response = await fetch(`https://priceapi.moneycontrol.com/pricefeed/nse/equitycash/${symbol.mcsymbol}`, {
+              "headers": {
+                "accept": "*/*",
+                "accept-language": "en-US,en;q=0.9",
+                "if-none-match": "F30DADFE47849461912656050BA26686",
+                "sec-ch-ua": "\"Google Chrome\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
+                "sec-ch-ua-mobile": "?0",
+                "sec-ch-ua-platform": "\"Windows\"",
+                "sec-fetch-dest": "empty",
+                "sec-fetch-mode": "cors",
+                "sec-fetch-site": "same-site",
+                "Referer": "https://www.moneycontrol.com/",
+                "Referrer-Policy": "strict-origin-when-cross-origin"
+              },
+              "body": null,
+              "method": "GET"
             });
-    
-            await Promise.all(promises);
-          }
-    
-          // Save the results as JSON to a file
-          const outputFilePath = './outputsymbolname.json';
-          fs.writeFile(outputFilePath, JSON.stringify(results, null, 2), err => {
-            if (err) {
-              console.error('Error while writing file:', err);
-              return;
+
+            // Check if the response is ok (status code 200-299)
+            if (!response.ok) {
+              console.warn(`Error fetching symbol: ${symbol.name}. Status: ${response.status}`);
+              return; // Move to the next symbol in case of an error
             }
-    
-            console.log('JSON data saved to:', outputFilePath);
-          });
-    
-          res.send('Processing complete');
-        } catch (error) {
-          console.error('Error:', error);
-          res.status(500).send('An error occurred');
+
+            const json = await response.json();
+            console.log(json)
+
+            // Validate if necessary fields are present
+            if (!json.data || !json.data.isinid || !json.data.SC_FULLNM) {
+              console.warn(`Invalid JSON for symbol: ${symbol.name}`);
+              return; // Move to the next symbol in case of invalid JSON
+            }
+
+            // Extract relevant data
+            const isin = json.data.isinid;
+            const sc_fullnm = json.data.SC_FULLNM;
+            const name = symbol.name || '';
+
+            // Push the extracted data into CSV rows
+            csvRows.push([symbol.mcsymbol, name, isin, sc_fullnm]);
+
+          } catch (error) {
+            console.error(`Error processing symbol: ${symbol.name}. Error:`, error);
+            // Move to the next symbol in case of a network or processing error
+          }
+        });
+
+        // Wait for all promises in the batch to resolve
+        await Promise.all(promises);
+      }
+
+      // Convert rows into CSV format
+      const csvData = csvRows.map(row => row.join(',')).join('\n');
+
+      // Save the CSV data into a file
+      const csvFilePath = './outputsymbolname2.csv';
+      fs.writeFile(csvFilePath, csvData, err => {
+        if (err) {
+          console.error('Error while writing CSV file:', err);
+          return res.status(500).send('Error writing CSV file');
         }
+
+        console.log('CSV data saved to:', csvFilePath);
+        res.send('CSV file created successfully');
       });
-    });
+
+    } catch (error) {
+      console.error('Error:', error);
+      res.status(500).send('An error occurred');
+    }
+  });
+});
+
+const createCsvWriter = require('csv-writer').createObjectCsvWriter;
+// List of company names
+const companies = ['Gujarat Fluorochemicals Limited ',
+  'Tube Investments of India ',
+  'IDFC First Bank  ',
+  'Adani Green Energy Limited ',
+  'PI Industries ',
+  'Max Healthcare Institute Limited ',
+  'Indian Hotels Company ',
+  'HDFC Asset Management Company  ',
+  'General Insurance Corporation of India ',
+  'Astral Limited ',
+  'Shree Cements ',
+  'The Tata Power Company ',
+  'Indian Bank ',
+  'Larsen & Toubro ',
+  'COFORGE LIMITED ',
+  'State Bank of India ',
+  'Dixon Technologies ',
+  'Jindal Steel & Power ',
+  'Star Health & Allied Insurance Company ',
+  'L&T Technology Services ',
+  'SBI Cards & Payment Services ',
+  'Indian Overseas Bank ',
+  'Mahindra & Mahindra Financial Services ',
+  'Schaeffler India  ',
+  'One 97 Communications Paytm ',
+  'Jet Airways ',
+  'Glenmark Pharma ',
+  'Gujarat Heavy Chemicals ',
+  'IVRCL ',
+  'Aditya Birla Nuvo ',
+  'EPL ',
+  'ING Vysya Bank ',
+  'Aftek ',
+  'Garden Silk Mills ',
+  'Gitanjali Gems ',
+  'Nagarjuna Fertilisers and Chemicals ',
+  'Vijaya Bank ',
+  'Gammon India ',
+  'The Bombay Dyeing Co. ',
+  'Punj Lloyd ',
+  'LML ',
+  'CMC ',
+  'Hexaware Technologies ',
+  'Opto Circuits India ',
+  'Deepak Fertilisers And Petrochemicals Corporation ',
+  'Dena Bank ',
+  'Allahabad Bank ',
+  'Reliance Capital ',
+  'Geometric ',
+  'Ranbaxy Laboratories ',
+  'Ramco System ',
+  'McDowell Holdings ',
+  'JB Chemicals and Pharmaceuticals ',
+  'Central Bank of India ',
+  'Andhra Bank ',
+  'Cairn India ',
+  'Jaypee Infratech ',
+  'Tata Steel Long Products ',
+  'Rane Engine Valves ',
+  'Tamilnadu Petroproducts ',
+  'Rico Auto ',
+  'Sterling Biotech ',
+  'Gujarat Industries Power Co. ',
+  'Gujarat Mineral Development Corporation ',
+  'Lanco Infratech ',
+  'Gujarat State Fertilizers & Chemicals ',
+  'GlaxoSmithKline Consumer Healthcare ',
+  'Bannariamman Sugars ',
+  'Sintex Industries ',
+  'Tata Steel BSL Limited  ',
+  'Mcleod Russel (India) ',
+  'Videocon Industries ',
+  'LG Balakrishnan and Brothers ',
+  'Syndicate Bank ',
+  'Essar Oil ',
+  'Reliance MediaWorks ',
+  'Oriental Bank of Commerce ',
+  'Procter & Gamble Health ',
+  'KSB  ',
+  'Amtek Auto ',
+  'JSW Ispat Special Products ',
+  'Smartlink Holdings       ',
+  'Amara Raja Energy & Mobility ',
+  'Borosil Renewables  ',
+  'AstraZeneca Pharma ',
+  'KPR Mill ',
+  'CCL Products India ',
+  'Gujarat Narmada Valley Fert & Chem. ',
+  'Aditya Birla Fashion & Retail ',
+  'Navin Fluorine International ',
+  'Godawari Power & Ispat ',
+  'Amber Enterprises India Limited ',
+  'Fertilisers and Chemicals Travancore ',
+  'Varun Shipping Company ',
+  'L&T Finance ',
+  'Fortis Healthcare  ',
+  'AAVAS Financiers  ',
+  'Rashtriya Chemicals and Fertilisers ',
+  'Clean Science & Technology ',
+  'Jammu and Kashmir Bank ',
+  'BSE Limited ',
+  'Action Construction Equipment ',
+  'Century Plyboards ',
+  'J. K. Cement ',
+  'Nuvama Wealth Management ',
+  'Prince Pipes & Fittings ',
+  'Aster DM Healthcare ',
+  'Central Depository Services ',
+  'Ircon International  ',
+  'Housing & Urban Development Corporation ',
+  'Bank of Maharashtra ',
+  'KEC International ',
+  'C. E. Info Systems (MapmyIndia) ',
+  'Network 18 Media & Investments ',
+  'Garden Reach Shipbuilders & Engineers ',
+  'Fine Organics Industries ',
+  'SUMITOMO CHEMICAL INDIA LIMITE ',
+  'Mrs. Bectors Food Specialities ',
+  'Punjab & Sind Bank ',
+  'ZF Commercial Vehicle Control Systems India ',
+  'Prataap Snacks  ',
+  'ADF Foods Industries ',
+  'LT Foods ',
+  'Shyam Metalics & Energy ',
+  'Sasta Sundar Ventures ',
+  'Avadh Sugar & Energy ',
+  'S H Kelkar & Company ',
+  'VIP Industries ',
+  'Ingersoll Rand (India) ',
+  'Venkys ',
+  'Whirlpool of India. ',
+  'TATA MOTORS - DVR ',
+  'Associated Alcohol and Breweries ',
+  'DFM Foods ',
+  'Arvind Fashions Limited ',
+  'Galaxy Surfactants  ',
+  'Syncom Formulations ',
+  'Orient Electric Limited ',
+  'Chaman Lal Setia Exports ',
+  'Hatsun Agro Products ',
+  'GM Breweries ',
+  'DB Corp ',
+  'Authum Investment & Infrastucture ',
+  'Federal-Mogul Goetze ',
+  'Bhagiradh Chemicals and Industries ',
+  'HG Infra Engineering  ',
+  'Entertainment Network India ',
+  'Go Fashion India ',
+  'Balmer Lawrie & Co ',
+  'Igarashi Motors ',
+  'Fusion Finance ',
+  'Confidence Petroleum ',
+  'HPL Electric & Power ',
+  'Indian Metals & Ferro Alloys ',
+  'Good Luck India ',
+  'GE T&D India ',
+  'IIFL Securities Limited ',
+  'IG Petrochemicals ',
+  'Equitas Holdings ',
+  'Honda India Power Products Limited ',
+  'Andhra Paper Limited ',
+  'Gandhar Oil Refinery India ',
+  'BL Kashyap & Sons ',
+  'Ahluwalia Contracts India ',
+  'Barbeque Nation Hospitality ',
+  'Dredging Corporation India ',
+  'Hi-Tech Pipes  ',
+  'Greenpanel Industries Limited ',
+  'Garware Hi-Tech Films ',
+  'JTEKT India  ',
+  'Jayant Agro-Organics ',
+  'National Fertilizers ',
+  'Nahar Poly Films ',
+  'Rane Madras ',
+  'Nalwa Sons Investment ',
+  'Patel Engineering Company ',
+  'Punjab Chemicals & Crop Protection ',
+  'Paisalo Digital  ',
+  'S P Apparels ',
+  'Sandhar Technologies ',
+  'Shree Digvijay Cement Company ',
+  'Shree Pushkar Chemicals and Fertilisers ',
+  'Shreyas Shipping ',
+  'Sadhana Nitrochem ',
+  'Kingfa Science & Technology ',
+  'Pix Transmissions ',
+  'SJS Enterprises ',
+  'Mangalore Chemicals and Fertilisers ',
+  'S Chand and Company Limited ',
+  'Jubilant Industries  ',
+  'Jindal Drilling Industries ',
+  'Kolte-Patil Developers ',
+  'ORIENTAL AROMATICS  ',
+  'Johnson Controls -Hitachi Air Conditioning India ',
+  'Thangamayil Jewellery  ',
+  'Sree Rayalaseema Hi Strength Hyp ',
+  'Akums Drugs & Pharmaceuticals ',
+  'Techno Electric & Engineering Company ',
+  'TV Today Network ',
+  'Texmaco Infrastructure & Holdings ',
+  'Srikalahasthi Pipes ',
+  'Mindtree ',
+  'Sundaram-Clayton ',
+  'Vindhya Telelink ',
+  'INOX Leisure ',
+  'LE Travenues Technology (IXIGO) ',
+  'D. P. Abhushan ',
+  'Tourism Finance Corp of India ',
+  'TeamLease Services ',
+  'J G Chemicals ',
+  'Taj GVK Hotels & Resorts ',
+  'Wendt (India) ',
+  'Allied Blenders & Distillers ',
+  'Vinyl Chemicals (India) ',
+  'Vraj Iron & Steel ',
+  'Shree Tirupati Balajee Agro Trading Company ',
+  'Ecos India Mobility & Hospitality ',
+  'Spencer Retail ',
+  'EPack Durables ',
+  'Ujjivan Financial Services  ',
+  'Harrisons Malyalam ',
+  'HT Media ',
+  'Birla Tyres ',
+  'GVK Power & Infrastructure ',
+  'ISMT ',
+  'Gujarat Sidhee Cement ',
+  'Indostar Capital Finance  ']
+// // Function to fetch data for each company
+// const fetchCompanyData = async (company) => {
+//   const url = `https://www.marketsmojo.com/common_services/searchScrips?section=stock&domain=mm&SearchPhrase=${encodeURIComponent(company)}&u=W29iamVjdCBPYmplY3Rd`;
+//   try {
+//       const response = await axios.get(url);
+//       console.log(`Data for ${company}:`, response.data);
+//       return response.data;  // Return the data to be used in response
+//   } catch (error) {
+//       console.error(`Error fetching data for ${company}:`, error);
+//       return null;  // Return null in case of an error
+//   }
+// };
+
+// // Route to fetch symbol details for all companies
+// app.get('/api/mmsymboldetails', async (req, res) => {
+//   const results = [];
+
+//   // Iterate through the list of companies and fetch data for each
+//   for (const company of companies) {
+//       const data = await fetchCompanyData(company);
+//       if (data) {
+//           results.push({ company, data });
+//       }
+//   }
+
+//   // Send the collected data as a JSON response
+//   res.json(results);
+// });
+const csvWriter = createCsvWriter({
+    path: 'company_data.csv',
+    header: [
+        { id: 'Symbol', title: 'Symbol' },
+        { id: 'Id', title: 'Id' },
+    ]
+});
+
+// Function to fetch data for each company
+const fetchCompanyData = async (company) => {
+    const url = `https://www.marketsmojo.com/common_services/searchScrips?section=stock&domain=mm&SearchPhrase=${encodeURIComponent(company)}&u=W29iamVjdCBPYmplY3Rd`;
+    try {
+        const response = await axios.get(url);
+        const dataArray = response.data;
+        
+        if (dataArray.length > 0) {
+            // Picking the first object as an example (you can change logic as needed)
+            const firstResult = dataArray[0]; 
+            const symbol = firstResult.Symbol || 'N/A';
+            const Id = firstResult.Id || 'N/A';
+            console.log(firstResult)
+            console.log(`Data for ${company}: Symbol - ${symbol}, Id - ${Id}`);
+
+            return { Symbol: symbol, Id: Id };
+        } else {
+            console.error(`No data found for ${company}`);
+            return null;
+        }
     
-              
+        console.log(`Data for ${company}:`,response.data, response.data['ScriptCode']);
+
+        // Assuming the response contains Symbol and ScriptCode (adjust if necessary)
+        const Symbol = response.data.Symbol || company;
+        const Id = response.data.Id || 'N/A';
+
+        return { Symbol: Symbol, Id: Id };
+    } catch (error) {
+        console.error(`Error fetching data for ${company}:`, error);
+        return null;  // Return null in case of an error
+    }
+};
+
+// Route to fetch symbol details for all companies and write to CSV
+app.get('/api/mmsymboldetails', async (req, res) => {
+    const results = [];
+
+    // Iterate through the list of companies and fetch data for each
+    for (const company of companies) {
+        const data = await fetchCompanyData(company);
+        if (data) {
+            results.push(data);
+        }
+    }
+
+    // Write data to CSV
+    csvWriter.writeRecords(results)
+        .then(() => {
+            console.log('CSV file written successfully');
+            res.send('CSV file created successfully.');
+        })
+        .catch((error) => {
+            console.error('Error writing to CSV:', error);
+            res.status(500).send('Error creating CSV file.');
+        });
+});
+
+
+
+app.get('/api/mmsymbolfetcher', async function (req, res) {
+  const { Parser } = require('json2csv');
+  const baseUrl = 'https://frapi.marketsmojo.com/stocks_Footer/get_stocks?alphabet=';
+  let result = [];
+
+  // Iterate through alphabet from 'a' to 'z'
+  for (let charCode = 97; charCode <= 122; charCode++) {
+    const alphabet = String.fromCharCode(charCode); // Convert char code to alphabet (a-z)
+    const url = `${baseUrl}${alphabet}`;
+
+    try {
+      const response = await fetch(url);
+      const jsonResponse = await response.json();
+
+      // Check if data exists in the response and append it to result
+      if (jsonResponse && jsonResponse.data) {
+        result = result.concat(jsonResponse.data);
+      }
+    } catch (error) {
+      console.error(`Error fetching data for alphabet ${alphabet}:`, error);
+    }
+  }
+
+  // Iterate through numbers '1' to '10'
+  for (let num = 1; num <= 10; num++) {
+    const url = `${baseUrl}${num}`;
+
+    try {
+      const response = await fetch(url);
+      const jsonResponse = await response.json();
+
+      // Check if data exists in the response and append it to result
+      if (jsonResponse && jsonResponse.data) {
+        result = result.concat(jsonResponse.data);
+      }
+    } catch (error) {
+      console.error(`Error fetching data for number ${num}:`, error);
+    }
+  }
+
+  // Map result to desired format (id, company, url)
+  const csvData = result.map(item => ({
+    id: item.Id,
+    company: item.Company,
+    url: item.url
+  }));
+
+  // Convert JSON to CSV
+  const json2csvParser = new Parser({ fields: ['id', 'company', 'url'] });
+  const csv = json2csvParser.parse(csvData);
+
+  // Write CSV to file
+  fs.writeFile('stocks_data.csv', csv, function (err) {
+    if (err) {
+      return console.error('Error writing to CSV file:', err);
+    }
+    console.log('CSV file has been saved.');
+  });
+});
+
+
+// const { Parser } = require('json2csv');
+
+
+//   const baseUrl = 'https://frapi.marketsmojo.com/stocks_Footer/get_stocks?alphabet=';
+//   let result = [];
+
+//   // Iterate through alphabet from 'a' to 'z'
+//   for (let charCode = 97; charCode <= 122; charCode++) {
+//     const alphabet = String.fromCharCode(charCode); // Convert char code to alphabet (a-z)
+//     const url = `${baseUrl}${alphabet}`;
+
+//     try {
+//       const response = await fetch(url);
+//       const jsonResponse = await response.json();
+
+//       // Check if data exists in the response and append it to result
+//       if (jsonResponse && jsonResponse.data) {
+//         result = result.concat(jsonResponse.data);
+//         console.log(result)
+//       }
+//     } catch (error) {
+//       console.error(`Error fetching data for alphabet ${alphabet}:`, error);
+//     }
+//   }
+
+//   // Map result to desired format (id, company, url)
+//   const csvData = result.map(item => ({
+//     id: item.Id,
+//     company: item.Company,
+//     url: item.url
+//   }));
+
+//   // Convert JSON to CSV
+//   const json2csvParser = new Parser({ fields: ['id', 'company', 'url'] });
+//   const csv = json2csvParser.parse(csvData);
+
+//   // Write CSV to file
+//   fs.writeFile('stocks_data.csv', csv, function (err) {
+//     if (err) {
+//       return console.error('Error writing to CSV file:', err);
+//     }
+//     console.log('CSV file has been saved.');
+//   });
+
+// });
+
+
+
+
+    
   app.get('/ttvolnmcinsight', async function (req, res) {
 
     ttvolbreakoutpg();
@@ -499,17 +961,17 @@ const batchSize = 100; // Number of symbols to process in each batch
    
     for (let val in cookie){
      
-        if (cookie[val].name == '.trendlyne'){
-          process.env.trnd=cookie[val].value
-        
-       }}
-       for (let val in cookie){
-       if (cookie[val].name == 'csrftoken'){
-         process.env.csrf=cookie[val].value
+      if (cookie[val].name == '.trendlyne'){
+        process.env.trnd=cookie[val].value
       
-      }
+     }}
+     for (let val in cookie){
+     if (cookie[val].name == 'csrftoken'){
+       process.env.csrf=cookie[val].value
+    
     }
-   
+  }
+ 
      console.log(process.env.csrf)
      console.log(process.env.trnd)
   
@@ -1477,7 +1939,123 @@ const batchSize = 100; // Number of symbols to process in each batch
 //       }
 //     });
 //   };
- 
+
+
+
+// URL with placeholder for ind_id
+const baseUrl = 'https://appfeeds.moneycontrol.com/jsonapi/market/marketmap&format=json&type=0&ind_id=';
+
+// Function to delay execution for a specified time (2 seconds)
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+// Function to fetch data and store the result in a file
+app.get('/api/mcsymbolfetchdata', async function fetchData() {
+  let results = [];
+
+  for (let ind_id = 1; ind_id <= 100; ind_id++) {
+    const url = `${baseUrl}${ind_id}`;
+    
+    try {
+      console.log(`Fetching data for ind_id: ${ind_id}`);
+      const response = await fetch(url);
+      const data = await response.json();
+      
+      // Save the fetched data
+      results.push({ ind_id, data });
+
+      // Wait for 2 seconds before making the next request
+      await delay(2000);
+      
+    } catch (error) {
+      console.error(`Error fetching data for ind_id: ${ind_id}`, error);
+    }
+  }
+
+  // Save all results in a JSON file
+  fs.writeFile('marketmap_data.json', JSON.stringify(results, null, 2), (err) => {
+    if (err) {
+      console.error('Error writing to file', err);
+    } else {
+      console.log('Data successfully written to marketmap_data.json');
+    }
+  });
+});
+
+// Start the process
+// fetchData();
+// app.get('/api/mcsymbolnamefetcher', async function (req, res) {
+   
+//   fs.readFile('./symbol.json', async (err, data) => {
+//     if (err) {
+//       console.log('Error while reading file:', err);
+//       return;
+//     }
+
+//     try {
+//       // Parse the data into an array
+//       const symbols = JSON.parse(data);
+
+//       // Process 100 symbols at a time
+//       const symbolBatches = [];
+//       for (let i = 0; i < symbols.length; i += 200) {
+//         symbolBatches.push(symbols.slice(i, i + 200));
+//       }
+
+//       const results = [];
+
+//       // Process each symbol batch asynchronously
+//       for (const symbolBatch of symbolBatches) {
+//         const promises = symbolBatch.map(async symbol => {
+//           try {
+//             const response = await fetch(`https://priceapi.moneycontrol.com/pricefeed/nse/equitycash/${symbol.mcsymbol}`, {
+// "headers": {
+// "accept": "*/*",
+// "accept-language": "en-US,en;q=0.9",
+// "if-none-match": "F30DADFE47849461912656050BA26686",
+// "sec-ch-ua": "\"Google Chrome\";v=\"113\", \"Chromium\";v=\"113\", \"Not-A.Brand\";v=\"24\"",
+// "sec-ch-ua-mobile": "?0",
+// "sec-ch-ua-platform": "\"Windows\"",
+// "sec-fetch-dest": "empty",
+// "sec-fetch-mode": "cors",
+// "sec-fetch-site": "same-site",
+// "Referer": "https://www.moneycontrol.com/",
+// "Referrer-Policy": "strict-origin-when-cross-origin"
+// },
+// "body": null,
+// "method": "GET"
+// }) 
+//             const jsonData = await response.json();
+//             const isinid = jsonData.data.isinid;
+//             const sc_fullnm = jsonData.data.SC_FULLNM;
+//             results.push(isinid,sc_fullnm);
+//           } catch (error) {
+//             console.error('Error processing symbol:', symbol.name, error);
+//           }
+//         });
+
+//         await Promise.all(promises);
+//       }
+
+//       // Save the results as JSON to a file
+//       const outputFilePath = './outputsymbolname.json';
+//       fs.writeFile(outputFilePath, JSON.stringify(results, null, 2), err => {
+//         if (err) {
+//           console.error('Error while writing file:', err);
+//           return;
+//         }
+
+//         console.log('JSON data saved to:', outputFilePath);
+//       });
+
+//       res.send('Processing complete');
+//     } catch (error) {
+//       console.error('Error:', error);
+//       res.status(500).send('An error occurred');
+//     }
+//   });
+// });
 //   async function ttvolbreakoutpg(req, res) {
 //     const start = Date.now();
 //     const obj = [];
