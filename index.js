@@ -925,7 +925,7 @@ app.get('/api/mmsymbolfetcher', async function (req, res) {
     // trendlyneDVMpg();
   });
   // app.use('/',(req,res) => {res.json({message:"Hi Amit!!!!"})})
-  app.use('/trendlynecookie', async function (req, res) {
+  app.use('/api/trendlynecookie', async function (req, res) {
 
             
    
