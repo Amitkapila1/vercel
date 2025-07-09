@@ -1,11 +1,11 @@
 require('chromedriver')
  const chromium = require('@sparticuz/chromium')
-  const puppeteer = require('puppeteer')
+  // const puppeteer = require('puppeteer')
  const swd = require("selenium-webdriver");
 const webdriver = require('selenium-webdriver');
 const chrome=require('selenium-webdriver/chrome')
 const express = require('express');
-const fs = require('fs');
+// const fs = require('fs');
 const filePath = './src/app/lists/tlid.txt';
 var app = express();
 const dotenv=require('dotenv')
@@ -925,100 +925,306 @@ app.get('/api/mmsymbolfetcher', async function (req, res) {
     // trendlyneDVMpg();
   });
   // app.use('/',(req,res) => {res.json({message:"Hi Amit!!!!"})})
-  app.use('/api/trendlynecookie', async function (req, res) {
+//   app.use('/api/trendlynecookie', async function (req, res) {
 
             
    
-    let browser = null
-    console.log('spawning chrome headless')
-    try {
-      const start = Date.now();
-      const executablePath =  await chromium.executablePath()
-    
-      browser = await puppeteer.launch({
-        args: chromium.args,
+//     let browser = null
+//     console.log('spawning chrome headless')
+//     try {
+//       const start = Date.now();
+//       const executablePath =  await chromium.executablePath()
+//       const localChromePath = process.env.LOCAL_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+
+//       browser = await puppeteer.launch({
+//         // args: chromium.args,
       
-    executablePath:executablePath ,
-    headless:true,
-     ignoreHTTPSErrors: true,
+//     executablePath:localChromePath ,
+//     headless:false,
+//      ignoreHTTPSErrors: true,
  
- })
+//  })
 
- page = await browser.newPage();
- await page.setCacheEnabled(true)
+//  page = await browser.newPage();
+//  await page.setCacheEnabled(true)
  
- const targetUrl = 'https://trendlyne.com/visitor/loginmodal/'
- await page.goto(targetUrl, {
-   waitUntil: ["domcontentloaded"]
- })
+//  const targetUrl = 'https://trendlyne.com/visitor/loginmodal/'
+//  await page.goto(targetUrl, {
+//    waitUntil: ["networkidle2"]
+//  })
+//  await page.waitForSelector('#id_login', { timeout: 10000 })
+// console.log(process.env.TRENDLYNE_EMAIL);
+//     // await page.type('#id_login', process.env.TRENDLYNE_EMAIL);
+//     await page.type('input#id_login, input[name="login"]', process.env.TRENDLYNE_EMAIL, { delay: 80 }); 
+//     // await page.type('#id_password', process.env.TRENDLYNE_PASSWORD);
+//     await page.type('input#id_password, input[name="password"]', process.env.TRENDLYNE_PASSWORD, { delay: 90 });
+//      await page.click('[type="submit"]');
+//     // Debugging: Take screenshot and save HTML after login attempt
+//     await page.waitForTimeout(3000); // Wait for 3 seconds to allow any redirects or error messages
+//     await page.screenshot({ path: 'trendlyne_after_login.png' });
+//     const html = await page.content();
+//     fs.writeFileSync('trendlyne_after_login.html', html);
 
-    await page.type('#id_login', process.env.TRENDLYNE_EMAIL);
-    
-    await page.type('#id_password', process.env.TRENDLYNE_PASSWORD);
-  
-     
-cookie = await page.cookies()
-console.log(cookie)
-for (let val in cookie){
+// cookie = await page.cookies()
+// console.log(cookie)
+// for (let val in cookie){
 
-   if (cookie[val].name == '.trendlyne'){
-     process.env.trnd=cookie[val].value
+//    if (cookie[val].name == '.trendlyne'){
+//      process.env.trnd=cookie[val].value
    
-  }}
-  for (let val in cookie){
-  if (cookie[val].name == 'csrftoken'){
-    process.env.csrf=cookie[val].value
+//   }}
+//   for (let val in cookie){
+//   if (cookie[val].name == 'csrftoken'){
+//     process.env.csrf=cookie[val].value
  
- }
-}
+//  }
+// }
 
-console.log(process.env.csrf)
-console.log(process.env.trnd)
+// console.log(process.env.csrf)
+// console.log(process.env.trnd)
 
  
-   axiosApiInstance
-     .post('/updateOne', {
-       collection: 'cookie',
-       database: 'Trendlynecookie',
-       dataSource: 'Cluster0',
-       filter: {},
-       update: {
-         $set: {
-           "csrf":  process.env.csrf,
-           "trnd":  process.env.trnd,
-           "time": start
-         },
-       },
-       upsert: true,
-     })
-     .then(() => {
-       console.log('Trendlyne cookie Data updated successfully');
+//    axiosApiInstance
+//      .post('/updateOne', {
+//        collection: 'cookie',
+//        database: 'Trendlynecookie',
+//        dataSource: 'Cluster0',
+//        filter: {},
+//        update: {
+//          $set: {
+//            "csrf":  process.env.csrf,
+//            "trnd":  process.env.trnd,
+//            "time": start
+//          },
+//        },
+//        upsert: true,
+//      })
+//      .then(() => {
+//        console.log('Trendlyne cookie Data updated successfully');
        
-     })
-     .catch((error) => {
-       console.log('Error while updating data:', error);
+//      })
+//      .catch((error) => {
+//        console.log('Error while updating data:', error);
       
-     });
+//      });
 
- const timeTaken = Date.now() - start;
- console.log(`Total time taken: ${timeTaken} milliseconds`);
+//  const timeTaken = Date.now() - start;
+//  console.log(`Total time taken: ${timeTaken} milliseconds`);
 
-} catch (error) {
- console.log(error);
+// } catch (error) {
+//  console.log(error);
 
- return {
-   statusCode: 500,
-   body: JSON.stringify({ msg: error.message }),
- };
-} finally {
- if (browser) {
-     await browser.close();
+//  return {
+//    statusCode: 500,
+//    body: JSON.stringify({ msg: error.message }),
+//  };
+// } finally {
+//  if (browser) {
+//     //  await browser.close();
    
- }
-}
+//  }
+// }
 
-});
-  
+// });
+// app.use('/api/trendlynecookie', async function (req, res) {
+//   let browser = null;
+//   console.log('spawning chrome headless');
+
+//   try {
+//     const start = Date.now();
+//     const executablePath = await chromium.executablePath();
+//     const localChromePath = process.env.LOCAL_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+
+//     browser = await puppeteer.launch({
+//       executablePath: localChromePath,
+//       headless: false,
+//       ignoreHTTPSErrors: true,
+//     });
+
+//     const page = await browser.newPage();
+//     await page.setCacheEnabled(true);
+
+//     const targetUrl = 'https://trendlyne.com/visitor/loginmodal/';
+//     await page.goto(targetUrl, {
+//       waitUntil: ['networkidle2'],
+//     });
+
+//     await page.waitForSelector('#id_login', { timeout: 10000 });
+//     console.log(process.env.TRENDLYNE_EMAIL);
+
+//     await page.type('input#id_login, input[name="login"]', process.env.TRENDLYNE_EMAIL, { delay: 80 });
+//     await page.type('input#id_password, input[name="password"]', process.env.TRENDLYNE_PASSWORD, { delay: 90 });
+
+//     // REMOVE OVERLAYS IF ANY
+//     await page.evaluate(() => {
+//       const overlay = document.querySelector('.modal-backdrop, .overlay, .blocker');
+//       if (overlay) overlay.remove();
+//     });
+
+//     // ENSURE BUTTON IS VISIBLE & ENABLED
+//     await page.waitForFunction(() => {
+//       const btn = document.querySelector('button[type=submit]');
+//       return (
+//         btn &&
+//         !btn.disabled &&
+//         btn.offsetParent !== null &&
+//         getComputedStyle(btn).pointerEvents !== 'none'
+//       );
+//     });
+
+//     // REALISTIC CLICK (some sites ignore synthetic click())
+//     const btn = await page.$('button[type=submit]');
+//     const box = await btn.boundingBox();
+//     await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
+//     await page.mouse.down();
+//     await page.mouse.up();
+
+//     // Wait after login attempt
+//     await page.waitForTimeout(3000);
+//     await page.screenshot({ path: 'trendlyne_after_login.png' });
+//     const html = await page.content();
+//     fs.writeFileSync('trendlyne_after_login.html', html);
+
+//     const cookie = await page.cookies();
+//     console.log(cookie);
+
+//     for (let val in cookie) {
+//       if (cookie[val].name == '.trendlyne') {
+//         process.env.trnd = cookie[val].value;
+//       }
+//     }
+
+//     for (let val in cookie) {
+//       if (cookie[val].name == 'csrftoken') {
+//         process.env.csrf = cookie[val].value;
+//       }
+//     }
+
+//     console.log(process.env.csrf);
+//     console.log(process.env.trnd);
+
+//     await axiosApiInstance.post('/updateOne', {
+//       collection: 'cookie',
+//       database: 'Trendlynecookie',
+//       dataSource: 'Cluster0',
+//       filter: {},
+//       update: {
+//         $set: {
+//           csrf: process.env.csrf,
+//           trnd: process.env.trnd,
+//           time: start,
+//         },
+//       },
+//       upsert: true,
+//     });
+
+//     console.log('Trendlyne cookie Data updated successfully');
+//     const timeTaken = Date.now() - start;
+//     console.log(`Total time taken: ${timeTaken} milliseconds`);
+
+//     res.status(200).json({ message: 'Login success', csrf: process.env.csrf, trnd: process.env.trnd });
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ msg: error.message });
+//   } finally {
+//     if (browser) {
+//       // await browser.close(); // Enable if you want to close the browser
+//     }
+//   }
+// });
+const puppeteer = require('puppeteer-extra');
+const StealthPlugin = require('puppeteer-extra-plugin-stealth');
+const fs = require('fs');
+puppeteer.use(StealthPlugin());
+
+// app.use('/api/trendlynecookie', async function (req, res) {
+ 
+//   let browser = null;
+//   console.log('spawning chrome with Google login');
+
+//   try {
+//     const start = Date.now();
+//     const localChromePath = process.env.LOCAL_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+
+//     browser = await puppeteer.launch({
+//       executablePath: localChromePath,
+//       headless: false,
+//       ignoreHTTPSErrors: true,
+//       args: ['--no-sandbox', '--disable-setuid-sandbox'],
+//     });
+
+//     const page = await browser.newPage();
+//     await page.setViewport({ width: 1280, height: 800 });
+//     await page.setCacheEnabled(true);
+
+//     const targetUrl = 'https://trendlyne.com/visitor/loginmodal/';
+//     await page.goto(targetUrl, { waitUntil: 'networkidle2' });
+
+//     // Wait and click Google login button
+//     await page.waitForSelector('button.google-login-button, .btn-google-login', { visible: true });
+//     await page.click('button.google-login-button, .btn-google-login');
+
+//     // Google Sign-in page
+//     await page.waitForSelector('input[type="email"]', { visible: true });
+//     await page.type('input[type="email"]', process.env.GOOGLE_EMAIL, { delay: 100 });
+//     await page.keyboard.press('Enter');
+
+//     await page.waitForTimeout(2000);
+
+//     await page.waitForSelector('input[type="password"]', { visible: true });
+//     await page.type('input[type="password"]', process.env.GOOGLE_PASSWORD, { delay: 100 });
+//     await page.keyboard.press('Enter');
+
+//     // Optional: handle “verify it’s you” or “approve access”
+//     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
+
+//     // Now back on Trendlyne, logged in
+//     await page.waitForTimeout(5000);
+//     await page.screenshot({ path: 'trendlyne_after_google_login.png' });
+//     const html = await page.content();
+//     fs.writeFileSync('trendlyne_after_google_login.html', html);
+
+//     const cookie = await page.cookies();
+//     let trnd, csrf;
+//     for (let val of cookie) {
+//       if (val.name == '.trendlyne') trnd = val.value;
+//       if (val.name == 'csrftoken') csrf = val.value;
+//     }
+
+//     process.env.trnd = trnd;
+//     process.env.csrf = csrf;
+
+//     await axiosApiInstance.post('/updateOne', {
+//       collection: 'cookie',
+//       database: 'Trendlynecookie',
+//       dataSource: 'Cluster0',
+//       filter: {},
+//       update: {
+//         $set: {
+//           csrf,
+//           trnd,
+//           time: start,
+//         },
+//       },
+//       upsert: true,
+//     });
+
+//     console.log('Trendlyne Google cookie updated');
+//     const timeTaken = Date.now() - start;
+//     console.log(`Total time: ${timeTaken} ms`);
+
+//     res.status(200).json({ message: 'Google login success', csrf, trnd });
+
+//   } catch (error) {
+//     console.log(error);
+//     res.status(500).json({ msg: error.message });
+//   } finally {
+//     if (browser) {
+//       // await browser.close(); // Optional
+//     }
+//   }
+// });
+
 
 // app.get('/trendlynecookiepg', async function (req, res) {
  
@@ -1403,6 +1609,103 @@ console.log(process.env.trnd)
 //       }
 //     });
 //   };
+
+
+app.use('/api/trendlynecookie', async function (req, res) {
+  let browser = null;
+  console.log('Spawning Chrome with Google login');
+
+  try {
+    const start = Date.now();
+    const localChromePath = process.env.LOCAL_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+
+    browser = await puppeteer.launch({
+      executablePath: localChromePath,
+      headless: false,
+      ignoreHTTPSErrors: true,
+      args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    });
+
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1280, height: 800 });
+    await page.setCacheEnabled(true);
+
+    const targetUrl = 'https://trendlyne.com/visitor/loginmodal/';
+    await page.goto(targetUrl, { waitUntil: 'networkidle2' });
+
+    // Click the Google login link (<a> tag)
+    await page.waitForSelector('a.socialaccount_provider[title="Google"]', { visible: true });
+    await Promise.all([
+      page.waitForNavigation({ waitUntil: 'networkidle2' }),
+      page.click('a.socialaccount_provider[title="Google"]'),
+    ]);
+
+    // Google Login - Email
+    await page.waitForSelector('input[type="email"]', { visible: true });
+    await page.type('input[type="email"]', process.env.GOOGLE_EMAIL, { delay: 100 });
+    await page.keyboard.press('Enter');
+
+    await page.waitForTimeout(2000);
+
+    // Google Login - Password
+    await page.waitForSelector('input[type="password"]', { visible: true });
+    await page.type('input[type="password"]', process.env.GOOGLE_PASSWORD, { delay: 100 });
+    await page.keyboard.press('Enter');
+
+    // Wait to redirect back to Trendlyne
+    await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 }).catch(() => {});
+    await page.waitForTimeout(5000);
+
+    // Debug screenshot and HTML save
+    await page.screenshot({ path: 'trendlyne_google_login_final.png' });
+    const html = await page.content();
+    fs.writeFileSync('trendlyne_after_google_login.html', html);
+
+    // Extract cookies
+    const cookies = await page.cookies();
+    let trnd = '';
+    let csrf = '';
+
+    for (let val of cookies) {
+      if (val.name === '.trendlyne') trnd = val.value;
+      if (val.name === 'csrftoken') csrf = val.value;
+    }
+
+    process.env.trnd = trnd;
+    process.env.csrf = csrf;
+    console.log("trnd="+process.env.trnd);
+    console.log("csrf="+process.env.csrf);
+    // Update MongoDB via axios
+    await axiosApiInstance.post('/updateOne', {
+      collection: 'cookie',
+      database: 'Trendlynecookie',
+      dataSource: 'Cluster0',
+      filter: {},
+      update: {
+        $set: {
+          csrf,
+          trnd,
+          time: start,
+        },
+      },
+      upsert: true,
+    });
+
+    console.log('Trendlyne Google cookie updated');
+    const timeTaken = Date.now() - start;
+    console.log(`Total time taken: ${timeTaken} milliseconds`);
+
+    res.status(200).json({ message: 'Google login success', csrf, trnd });
+
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({ msg: error.message });
+  } finally {
+    if (browser) {
+       await browser.close(); // Optional
+    }
+  }
+});
 
     async function Trendlynecookie(req, res) {
    
