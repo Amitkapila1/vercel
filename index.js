@@ -1175,7 +1175,7 @@ puppeteer.use(StealthPlugin());
 //     await page.type('input[type="password"]', process.env.GOOGLE_PASSWORD, { delay: 100 });
 //     await page.keyboard.press('Enter');
 
-//     // Optional: handle “verify it’s you” or “approve access”
+//     // Optional: handle "verify it's you" or "approve access"
 //     await page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 15000 }).catch(() => {});
 
 //     // Now back on Trendlyne, logged in
@@ -1801,97 +1801,84 @@ app.use('/api/trendlynecookie', async function (req, res) {
   };
  
   
-  app.get('/Opstracookie', async function (req, res) {
-   
-    let browser = null
-    console.log('spawning chrome headless')
+  app.use('/api/Opstracookie', async function (req, res) {
+    let browser = null;
+    console.log('Spawning Chrome for Opstra login');
+
     try {
       const start = Date.now();
-      const executablePath = process.env.CHROME_EXECUTABLE_PATH || await chromium.executablePath() 
-    
+      const localChromePath = process.env.LOCAL_CHROME_PATH || 'C:/Program Files/Google/Chrome/Application/chrome.exe';
+
       browser = await puppeteer.launch({
-             args: chromium.args,
-           
-         executablePath:executablePath ,
-         headless:true,
-          ignoreHTTPSErrors: true,
-      
-      })
-     
-      page = await browser.newPage();
-      await page.setCacheEnabled(true)
-      
-      const targetUrl = "https://opstra.definedge.com/ssologin"
-      await page.goto(targetUrl, {
-        waitUntil: ["domcontentloaded"]
-      })
-     
-         await page.keyboard.type('#username', process.env.TRENDLYNE_EMAIL);
-         
-         await page.keyboard.type('#password', process.env.OPSTRA_PASSWORD);
-       
-          
-    cookie = await page.cookies()
- 
-    for (let val in cookie){
-     
-        if (cookie[val].name == 'JSESSIONID'){
-          process.env.jsessionid=cookie[val].value
-        
-       }
-       if (cookie[val].name == 'DSESSIONID'){
-        process.env.dsessionid=cookie[val].value
-      
-     }} 
- 
-   
-     
-  
-      
-      axiosApiInstance
-      .post('/updateOne', {
+        executablePath: localChromePath,
+        headless: false,
+        ignoreHTTPSErrors: true,
+        args: ['--no-sandbox', '--disable-setuid-sandbox'],
+      });
+
+      const page = await browser.newPage();
+      await page.setViewport({ width: 1280, height: 800 });
+      await page.setCacheEnabled(true);
+
+      const targetUrl = 'https://opstra.definedge.com/ssologin';
+      await page.goto(targetUrl, { waitUntil: 'networkidle2' });
+
+      // Fill in username and password
+      await page.waitForSelector('#username', { visible: true });
+      await page.type('#username', process.env.TRENDLYNE_EMAIL, { delay: 80 });
+      await page.waitForSelector('#password', { visible: true });
+      await page.type('#password', process.env.OPSTRA_PASSWORD, { delay: 90 });
+      await page.keyboard.press('Enter');
+
+      // Wait for navigation or some indication of login
+      await page.waitForTimeout(5000);
+      await page.screenshot({ path: 'opstra_after_login.png' });
+      const html = await page.content();
+      fs.writeFileSync('opstra_after_login.html', html);
+
+      // Extract cookies
+      const cookies = await page.cookies();
+      let jsessionid = '';
+      let dsessionid = '';
+      for (let val of cookies) {
+        if (val.name === 'JSESSIONID') jsessionid = val.value;
+        if (val.name === 'DSESSIONID') dsessionid = val.value;
+      }
+      process.env.jsessionid = jsessionid;
+      process.env.dsessionid = dsessionid;
+      console.log('jsessionid=' + process.env.jsessionid);
+      console.log('dsessionid=' + process.env.dsessionid);
+
+      // Update MongoDB via axios
+      await axiosApiInstance.post('/updateOne', {
         collection: 'cookie',
         database: 'Opstracookie',
         dataSource: 'Cluster0',
         filter: {},
         update: {
           $set: {
-            
-            "jsessionid":  process.env.jsessionid,
-            "time": start
+            jsessionid,
+            dsessionid,
+            time: start,
           },
         },
         upsert: true,
-      })
-      .then(() => {
-        console.log('Opstra cookie Data updated successfully');
-       
-      })
-      .catch((error) => {
-        console.log('Error while updating data:', error);
-       
       });
 
-  const timeTaken = Date.now() - start;
-  console.log(`Total time taken: ${timeTaken} milliseconds`);
+      console.log('Opstra cookie updated');
+      const timeTaken = Date.now() - start;
+      console.log(`Total time taken: ${timeTaken} milliseconds`);
 
- 
- 
-} catch (error) {
-  console.log(error);
-
-  return {
-    statusCode: 500,
-    body: JSON.stringify({ msg: error.message }),
-  };
-} finally {
-  if (browser) {
-      await browser.close();
-  
-  }
-}
-
-});
+      res.status(200).json({ message: 'Opstra login success', jsessionid, dsessionid });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({ msg: error.message });
+    } finally {
+      if (browser) {
+        await browser.close();
+      }
+    }
+  });
   
  
   //*This is ET now Stock Data Details used in Share component using parallel api run
